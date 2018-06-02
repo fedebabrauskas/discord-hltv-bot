@@ -1,0 +1,23 @@
+{
+  "name": "discord-hltv-bot",
+  "version": "1.0.0",
+  "description": "Discord Bot to get matches info from HLTV.org",
+  "author": "Federico Babrauskas",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon --exec babel-node index.js"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-preset-env": "^1.7.0",
+    "nodemon": "^1.17.5"
+  },
+  "dependencies": {
+    "discord.js": "^11.3.2",
+    "hltv": "^2.7.2",
+    "moment": "^2.22.2"
+  }
+}
