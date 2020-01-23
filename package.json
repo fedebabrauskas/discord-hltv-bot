@@ -19,7 +19,7 @@
   "dependencies": {
     "discord.js": "^11.3.2",
     "hltv": "^2.7.2",
-    "lodash": "^4.17.10",
+    "lodash": "^4.17.13",
     "moment": "^2.22.2"
   }
 }
