@@ -1,30 +1,30 @@
-import Discord from 'discord.js';
-import moment from 'moment';
-import _ from 'lodash';
-import { HLTV } from 'hltv';
+import { MessageEmbed } from "discord.js";
+import moment from "moment";
+import _ from "lodash";
+import { HLTV } from "hltv";
 
-import { myTeams } from '../config';
+import { myTeams } from "../config";
 
 const getNextMatch = async () => {
   try {
-    // get all matches from HLTV.org
+    // Get matches from HLTV
     const allMatches = await HLTV.getMatches();
-    // create new array with matches of myTeams
-    const id = allMatches.filter(({ team1, team2, date }) => {
-      // check if both teams exist
-      if (team1 && team2)
+    // Create new array with matches of my teams
+    const filteredMatches = allMatches.filter(({ team1, team2, date }) => {
+      if (team1 && team2) {
         return (
-          (date && myTeams.indexOf(team1.name) > -1) ||
-          myTeams.indexOf(team2.name) > -1
+          date &&
+          myTeams.some(team => team === team1.name || team === team2.name)
         );
-    })[0].id;
-    return await HLTV.getMatch({ id });
-  } catch (err) {
-    console.log(err);
+      }
+    });
+    return HLTV.getMatch({ id: filteredMatches[0].id });
+  } catch (error) {
+    console.log(error);
   }
 };
 
-export const nextMatchDetails = async msg => {
+export const nextMatchDetails = async (client, message) => {
   const {
     team1,
     team2,
@@ -33,24 +33,50 @@ export const nextMatchDetails = async msg => {
     event,
     maps,
     live,
-    streams
+    streams,
   } = await getNextMatch();
-  // create discord rich embed
-  const matchEmbed = new Discord.RichEmbed()
-    .setTitle(`${team1.name} vs. ${team2.name} ${live ? '(PLAYING)' : ''}`)
-    .setColor('#44bbfc')
-    .addField('Date', moment(new Date(date)).format('LLL'))
-    .addField('Format', format)
-    .addField('Event', event.name)
-    .addField('Maps', maps.map(m => `${m.name} - ${m.result}`).join(', '))
-    .addField(
-      'Streams',
-      streams.length > 0
-        ? `${streams[0].name} (${streams[0].viewers}) - ${streams[0].link}`
-        : 'No streams for this match'
-    );
-  // print embed in the chat
-  return msg.channel.send(matchEmbed);
+  return message.channel.send({
+    embed: new MessageEmbed({
+      color: 4504572,
+      author: {
+        name: client.user.username,
+        icon_url: client.user.avatarURL,
+      },
+      title: `${team1.name} vs. ${team2.name} ${live ? "(PLAYING)" : ""}`,
+      fields: [
+        {
+          name: "Date",
+          value: moment(new Date(date)).format("LLL"),
+        },
+        {
+          name: "Format",
+          value: format,
+        },
+        {
+          name: "Event",
+          value: event.name,
+        },
+        {
+          name: "Maps",
+          value: maps
+            .map(m => `${m.name} ${m.name === "tba" ? "" : `- ${m.result}`}`)
+            .join(", "),
+        },
+        {
+          name: "Streams",
+          value:
+            streams.length > 0
+              ? `${streams[0].name} (${streams[0].viewers}) - https://www.hltv.org${streams[0].link}`
+              : "No streams for this match",
+        },
+      ],
+      timestamp: new Date(),
+      footer: {
+        icon_url: client.user.avatarURL,
+        text: "© 2020",
+      },
+    }),
+  });
 };
 
 export const nextMatchAnnouncer = client => {
@@ -58,24 +84,24 @@ export const nextMatchAnnouncer = client => {
   // empty variable for current match
   let currentMatch = {};
   // find channel on every guild to print messages
-  client.guilds.forEach(g => {
-    let defaultChannel = '';
-    g.channels.forEach(c => {
-      if (c.type === 'text' && defaultChannel === '') {
-        if (c.permissionsFor(g.me).has('SEND_MESSAGES')) {
-          defaultChannel = c;
+  client.guilds.cache.forEach(guild => {
+    let defaultChannel;
+    guild.channels.cache.forEach(channel => {
+      if (channel.type === "text" && !defaultChannel) {
+        if (channel.permissionsFor(guild.me).has("SEND_MESSAGES")) {
+          defaultChannel = channel;
         }
       }
     });
     setInterval(async () => {
       const nextMatch = await getNextMatch();
       const { team1, team2, date, streams } = nextMatch;
-      if (!_.isEqual(currentMatch, nextMatch)) {
+      if (currentMatch.id !== nextMatch.id) {
         currentMatch = nextMatch;
+        const matchDate = moment(new Date(date)).calendar();
         defaultChannel.send(
-          `**${team1.name} vs. ${team2.name}** - *${moment(
-            new Date(date)
-          ).calendar()}* ${!_.isEmpty(streams) ? `\n${streams[0].link}` : ''}`
+          `**${team1.name} vs. ${team2.name}** - ${matchDate} ${streams &&
+            `\nhttps://www.hltv.org${streams[0].link}`}`,
         );
       }
     }, timeInMinutes * 60 * 1000);

@@ -14,12 +14,12 @@
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
     "babel-preset-env": "^1.7.0",
-    "nodemon": "^1.17.5"
+    "nodemon": "^2.0.2"
   },
   "dependencies": {
-    "discord.js": "^11.3.2",
-    "hltv": "^2.7.2",
-    "lodash": "^4.17.10",
-    "moment": "^2.22.2"
+    "discord.js": "^12.0.1",
+    "hltv": "^2.19.2",
+    "lodash": "^4.17.15",
+    "moment": "^2.24.0"
   }
 }
